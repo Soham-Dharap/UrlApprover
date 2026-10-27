@@ -46,7 +46,7 @@ Both features use read-only lookups of **existing** VirusTotal reports, not new 
 
 ## Deploy on Render with a Blueprint
 
-The root `render.yaml` provisions a single **Free** Node web service named `cyberace` in Singapore and builds the frontend with the API. Render assigns a unique `onrender.com` address incorporating the service name; the exact address is shown in its dashboard after creation. If you already created a Blueprint service named `linkscope-url-scanner`, review the proposed changes carefully: the new name can create a replacement service rather than rename the existing URL.
+The root `render.yaml` provisions a single **Free** Node web service named `cyberace-security-platform` in Singapore and builds the frontend with the API. Render assigns a unique `onrender.com` address incorporating the service name; the exact address is shown in its dashboard after creation. If you already created a Blueprint service named `linkscope-url-scanner`, review the proposed changes carefully: the new name can create a replacement service rather than rename the existing URL.
 
 1. Commit and push your changes, including `render.yaml`, to the connected GitHub branch.
 2. Open [Deploy Cyber Ace to Render](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2FSoham-Dharap%2FUrlApprover%2Ftree%2Farena%2F9f125033-urlapprover), or choose **New → Blueprint** in the Render Dashboard and connect the repository.
