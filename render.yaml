@@ -1,0 +1,21 @@
+# Render Blueprint: one Node web service serves both the UI and API.
+# The optional VIRUSTOTAL_API_KEY is intentionally omitted so deployment does
+# not require a key; add it later in the service's Environment tab if desired.
+services:
+  - type: web
+    name: linkscope-url-scanner
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      # Keep the runtime patched; see https://render.com/docs/node-version.
+      - key: NODE_VERSION
+        value: '22.23.4'
+      - key: NODE_ENV
+        value: production
+      # Render is behind a proxy; only trust the nearest forwarded hop.
+      - key: TRUST_PROXY_HOPS
+        value: '1'
