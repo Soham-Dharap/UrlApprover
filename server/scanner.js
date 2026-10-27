@@ -60,7 +60,7 @@ export function isPublicAddress(address) {
   }
 }
 
-function isLocalHostname(hostname) {
+export function isLocalHostname(hostname) {
   if (net.isIP(hostname)) return false;
   return !hostname.includes('.') || ['localhost', 'local', 'internal', 'lan', 'home.arpa', 'onion', 'test', 'invalid'].some(
     (suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`),

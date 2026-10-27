@@ -3,7 +3,7 @@
 # not require a key; add it later in the service's Environment tab if desired.
 services:
   - type: web
-    name: linkscope-url-scanner
+    name: cyberace
     runtime: node
     plan: free
     region: singapore

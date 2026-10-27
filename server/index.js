@@ -19,5 +19,5 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 httpServer.listen(port, '0.0.0.0', () => {
-  console.log(`Linkscope is listening on port ${port}`);
+  console.log(`Cyber Ace is listening on port ${port}`);
 });

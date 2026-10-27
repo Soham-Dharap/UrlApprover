@@ -88,3 +88,23 @@ test('rejects invalid proxy-hop configuration instead of trusting all proxies', 
     assert.throws(() => createApp({ trustProxyHops }), /TRUST_PROXY_HOPS/);
   }
 });
+
+test('new tool endpoints forward only their expected data and share scan rate limits', async () => {
+  const received = [];
+  const app = createApp({
+    apiKey: 'server-key',
+    trustProxyHops: 0,
+    domainScanner: async (domain) => { received.push(['domain', domain]); return { domain, checks: [] }; },
+    headerScanner: async (url) => { received.push(['headers', url]); return { available: true, checks: [] }; },
+    fileReputationScanner: async (hash, options) => { received.push(['hash', hash, options.apiKey]); return { status: 'present' }; },
+  });
+  await withServer(app, async (base) => {
+    const post = (route, body) => fetch(`${base}${route}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    assert.equal((await post('/api/dns-audit', { domain: 'example.com' })).status, 200);
+    assert.equal((await post('/api/security-headers', { url: 'https://example.com' })).status, 200);
+    assert.equal((await post('/api/file-reputation', { sha256: 'a'.repeat(64) })).status, 200);
+    assert.deepEqual(received, [['domain', 'example.com'], ['headers', 'https://example.com'], ['hash', 'a'.repeat(64), 'server-key']]);
+    for (let i = 0; i < 12; i++) assert.equal((await post('/api/dns-audit', { domain: 'example.com' })).status, 200);
+    assert.equal((await post('/api/security-headers', { url: 'https://example.com' })).status, 429);
+  });
+});

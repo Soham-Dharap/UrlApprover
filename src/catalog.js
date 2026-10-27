@@ -1,0 +1,96 @@
+import {
+  FileSearch,
+  Fingerprint,
+  Globe2,
+  KeyRound,
+  Link2,
+  MailSearch,
+} from 'lucide-react';
+
+export const tools = [
+  {
+    id: 'url',
+    number: '01',
+    name: 'URL Scanner',
+    path: '/tools/url-scanner',
+    icon: Link2,
+    category: 'EVERYDAY SAFETY',
+    group: 'everyday',
+    accent: 'lime',
+    description:
+      'Think before you click. Explore suspicious links for common red flags.',
+    action: 'Scan a URL',
+    tag: 'LINK INTELLIGENCE',
+  },
+  {
+    id: 'file',
+    number: '02',
+    name: 'File Scanner',
+    path: '/tools/file-scanner',
+    icon: FileSearch,
+    category: 'EVERYDAY SAFETY',
+    group: 'everyday',
+    accent: 'violet',
+    description:
+      'Take a closer look at a file’s fingerprint, format, and risk signals.',
+    action: 'Inspect a file',
+    tag: 'FILE INTELLIGENCE',
+  },
+  {
+    id: 'password',
+    number: '03',
+    name: 'Password Studio',
+    path: '/tools/password-studio',
+    icon: KeyRound,
+    category: 'EVERYDAY SAFETY',
+    group: 'everyday',
+    accent: 'peach',
+    description:
+      'Build stronger passwords and understand what makes them resilient.',
+    action: 'Check a password',
+    tag: 'PASSWORD SECURITY',
+  },
+  {
+    id: 'email',
+    number: '04',
+    name: 'Email Header Analyzer',
+    path: '/tools/email-headers',
+    icon: MailSearch,
+    category: 'EVERYDAY SAFETY',
+    group: 'everyday',
+    accent: 'blue',
+    description:
+      'Make sense of email headers and spot signals worth investigating.',
+    action: 'Analyze headers',
+    tag: 'EMAIL INTELLIGENCE',
+  },
+  {
+    id: 'dns',
+    number: '05',
+    name: 'Domain Inspector',
+    path: '/tools/domain-inspector',
+    icon: Globe2,
+    category: 'WEBSITE SECURITY',
+    group: 'website',
+    accent: 'mint',
+    description:
+      'Explore public DNS, mail servers, and email authentication policies.',
+    action: 'Inspect a domain',
+    tag: 'DOMAIN INTELLIGENCE',
+  },
+  {
+    id: 'headers',
+    number: '06',
+    name: 'Security Headers',
+    path: '/tools/security-headers',
+    icon: Fingerprint,
+    category: 'WEBSITE SECURITY',
+    group: 'website',
+    accent: 'rose',
+    description:
+      'Check the HTTP security headers a website sends to your browser.',
+    action: 'Check a website',
+    tag: 'WEB HARDENING',
+  },
+];
+export const toolById = (id) => tools.find((tool) => tool.id === id);

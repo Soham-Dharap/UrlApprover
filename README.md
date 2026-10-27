@@ -1,78 +1,79 @@
-# Linkscope
+# Cyber Ace
 
-A URL-safety **first-pass research tool**. Linkscope examines a link's formatting, public DNS resolution, and HTTPS certificate, and can optionally retrieve an existing VirusTotal report. It explains which checks ran and which were unavailable instead of claiming that a link is definitely safe.
+Cyber Ace is a single cybersecurity toolkit with six independently usable tools, a React landing page, and one Node API. Each tool explains the signals it can and cannot check; none can guarantee that a link, file, password, or website is safe.
 
-> **Not a VirusTotal replacement or a malware sandbox.** The app does not open pages, follow redirects, download files, inspect page content, or execute malware. A clean result is not proof of safety, and legitimate links can trigger warnings. Do not paste private links, credentials, or secrets.
+> **Research and education prototype, not a replacement for antivirus or a full security audit.** File checks are limited to fingerprints, basic signatures and filename heuristics. Optional VirusTotal lookups retrieve existing reports only. No file or website is executed, no redirects are followed, and clean results are not proof of safety.
+
+## The toolkit
+
+| Tool | What it does | Where data goes |
+| --- | --- | --- |
+| **URL Scanner** (`/tools/url-scanner`) | Checks URL formatting, public DNS, TLS, and optionally an existing VirusTotal URL report. | The URL reaches this server. Only with opt-in, the complete URL is also sent to VirusTotal. Browser history stores hostnames, result labels, and timestamps—not full URLs. |
+| **File Scanner** (`/tools/file-scanner`) | Computes SHA-256, checks basic file signatures and filename/extension signals, and calculates byte entropy. Optionally checks an existing VirusTotal file report. | File bytes are processed in the browser and are not uploaded. With opt-in, only the SHA-256 fingerprint is sent to this server and VirusTotal. |
+| **Password Studio** (`/tools/password-studio`) | Estimates password strength with zxcvbn and generates random passwords using Web Crypto. It does not search breach databases. | Passwords remain in the browser and are not sent to the server or stored by this app. |
+| **Email Header Analyzer** (`/tools/email-headers`) | Parses sender/reply-to fields, hop counts, and SPF/DKIM/DMARC *claims*. Those claims are not independently verified and can be forged. | Headers are processed in the browser; paste headers only, not private message bodies. |
+| **Domain Inspector** (`/tools/domain-inspector`) | Queries public A, AAAA, MX, NS, SPF, and DMARC records. It does not validate DNSSEC, DKIM, ownership, or complete policy correctness. | The domain reaches this server and its DNS resolver. |
+| **Security Headers** (`/tools/security-headers`) | Sends a HEAD request to a public site's root on a standard port and reports selected headers. It does not follow redirects or validate header effectiveness. | The input reaches this server; the destination receives a root HEAD request, not the supplied path or query. |
+
+An optional VirusTotal lookup can be stale or unavailable, may produce false positives, and shares data with the provider. A TLS certificate or security header does not establish trust. DNS records and email headers can be incomplete or misleading. Always apply independent judgment.
 
 ## Run locally
 
-Requires Node.js 20 or later.
+Requires Node.js 20 or newer.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Open <http://localhost:3000>. The React/Vite frontend and the Node API run on the same server. The UI uses relative `/api` URLs, so it also works behind a preview proxy.
+Open <http://localhost:3000>. The frontend and API share one server and use relative `/api` URLs. Each tool has its own client-side route; the production server handles direct visits and refreshes.
 
 ```sh
-npm test       # network-isolated unit and API tests
-npm run build  # build the production frontend
-npm start      # serve the build and API
+npm test       # unit, API, and deployment tests; no live external services required
+npm run build  # production frontend
+npm start      # serve production frontend and API
 ```
 
-The default port is `3000`; set `PORT` to change it. The server reads a local `.env` file if present.
+The server honors `PORT` (default 3000) and reads a local `.env` file if present.
+
+## Optional VirusTotal integration
+
+1. Copy `.env.example` to `.env` and set `VIRUSTOTAL_API_KEY` **on the server**. Never commit a key or put it in browser code.
+2. Restart the server. Optional lookup controls become available in the URL and file tools.
+3. Users must explicitly opt in for each lookup. URL checks send the **full URL** to VirusTotal; file checks send the **SHA-256 fingerprint only**, never the file. URLs containing credentials are not sent.
+
+Both features use read-only lookups of **existing** VirusTotal reports, not new submissions. Unknown, outdated, rate-limited, or unavailable reports are marked as such. Review [VirusTotal's API documentation and usage terms](https://docs.virustotal.com/reference/overview) before deployment.
 
 ## Deploy on Render with a Blueprint
 
-The root `render.yaml` provisions one **Free** Node web service in Singapore. It builds the frontend and serves it together with the API; no database or additional service is needed.
+The root `render.yaml` provisions a single **Free** Node web service named `cyberace` in Singapore and builds the frontend with the API. Render assigns a unique `onrender.com` address incorporating the service name; the exact address is shown in its dashboard after creation. If you already created a Blueprint service named `linkscope-url-scanner`, review the proposed changes carefully: the new name can create a replacement service rather than rename the existing URL.
 
-1. Commit and push this project, including `render.yaml`, to a GitHub branch.
-2. In the [Render Dashboard](https://dashboard.render.com/), choose **New → Blueprint** and connect the repository.
-3. Select the branch containing `render.yaml` (for the current Arena session: `arena/9f125033-urlapprover`), review the resources and click **Deploy Blueprint**. Render will build and deploy that same branch and provide an `onrender.com` URL.
-4. After the deploy is live, open the URL and try a scan. The `/api/health` endpoint is used for Render health checks.
-5. Optional: in the web service's **Environment** tab, add `VIRUSTOTAL_API_KEY` privately, then save and redeploy/restart. It is not required for the Blueprint to deploy. Do not paste the key into GitHub or chat.
+1. Commit and push your changes, including `render.yaml`, to the connected GitHub branch.
+2. Open [Deploy Cyber Ace to Render](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2FSoham-Dharap%2FUrlApprover%2Ftree%2Farena%2F9f125033-urlapprover), or choose **New → Blueprint** in the Render Dashboard and connect the repository.
+3. Confirm the branch `arena/9f125033-urlapprover`, review the service, and choose **Deploy Blueprint**. Render provides the `onrender.com` URL.
+4. Optionally add `VIRUSTOTAL_API_KEY` in the service's **Environment** tab, then save and redeploy/restart. It is not required to deploy.
 
-The Free instance spins down after inactivity, so the first request after idle can take around a minute before the app is available. That startup time is separate from the scan's 30-second browser timeout; use an always-on paid plan if predictable availability is important. Free-tier limits and availability are set by Render.
+Free instances spin down after inactivity and a cold start can take around a minute; this is separate from a tool's scan timeout. Free-tier limits and availability are set by Render.
 
-The Blueprint configures `TRUST_PROXY_HOPS=1` so the scanner's basic in-memory rate limiter uses only the nearest forwarded hop rather than trusting the whole `X-Forwarded-For` chain. It defaults to `0` (no proxy trust) outside Render. Verify the actual proxy topology after deployment: extra proxies can cause users to share a rate-limit bucket, and trusting too many hops can allow spoofing. This per-instance limiter is best-effort, resets on restart, and is not a substitute for an edge/WAF and a distributed rate limiter on a public deployment.
+The Blueprint sets `TRUST_PROXY_HOPS=1` for the nearest forwarded hop; local use defaults to no proxy trust. Confirm your real proxy topology: extra proxies can cause shared rate-limit buckets, while trusting too many hops can allow spoofing. The in-memory, per-instance limiter is best-effort and resets on restart; use an edge/WAF and a distributed limiter before public production use.
 
-## Optional threat intelligence
+## Safety architecture and limitations
 
-1. Copy `.env.example` to `.env` and set `VIRUSTOTAL_API_KEY` on the **server**. Do not put API keys in frontend code or commit them.
-2. Restart the server. The checkbox in the scanner becomes available.
-3. The user must opt in for each scan. If selected, the **full URL**, including its path and query, is sent to VirusTotal. Links containing username/password fields are never sent.
-
-Linkscope uses a read-only `GET /api/v3/urls/{id}` lookup of an **existing** VirusTotal report; it does not submit a URL for a new analysis. A missing report, an old/undated report, quota errors, or an unavailable service are displayed explicitly. Review [VirusTotal's API documentation and usage terms](https://docs.virustotal.com/reference/overview) before deploying.
-
-Without a key or without opt-in, threat intelligence is marked **not checked**. A scan with no obvious issues is shown as limited rather than safe.
-
-## What is checked
-
-- **URL patterns:** credentials in the URL, IP-based hosts, internationalized domains, excessive subdomains, long links, and non-standard ports. These are heuristics, not proof of phishing.
-- **DNS:** resolves the hostname and requires every returned address to be public. This says nothing about whether the domain is trustworthy.
-- **TLS:** for HTTPS on the standard port, performs a TLS handshake against an already validated IP and checks certificate identity and trust. No URL path or page content is sent. A valid certificate means encryption is available, not that the site is benign.
-- **Reputation:** optionally retrieves a pre-existing VirusTotal report with the user's consent. Engine flags can be wrong or stale; an absence of detections is not proof of safety.
-
-DNS has a 6-second limit, and TLS and reputation checks run concurrently with approximately 7-second limits. The browser stops waiting after 30 seconds. Network conditions and provider behavior can still prevent results. The scanner's network may block destinations or intercept TLS: in that case, checks can be unavailable or report a certificate that cannot be verified. The scanner reports the certificate it actually receives, not necessarily the origin's certificate.
-
-## Security and privacy design
-
-- Only HTTP(S) links are accepted. Local and single-label names are blocked; private, loopback, link-local, reserved, special-use, and non-global IPv6 addresses are denied. All DNS answers are checked; mixed public/private answers are rejected.
-- TLS connects directly to a previously validated IP on port 443, with the original hostname used for certificate validation. This avoids a second DNS lookup at connection time and limits DNS-rebinding risk. Arbitrary ports, HTTP requests, and redirects are not followed.
-- Requests have body-size, concurrency, and basic IP-based rate limits. API responses use `no-store`. The app does not log URLs or save scan results on the server.
-- The displayed report masks URL credentials, query strings, and fragments. Recent history stores only hostnames, verdict labels, and timestamps in the user's browser, where it can be cleared. DNS providers, network intermediaries, a deployment's own logging infrastructure, and an opted-in VirusTotal lookup may still see data; use HTTPS in production.
-
-These controls reduce risk but are not a complete production security boundary. For public deployment, add a dedicated isolated scanning worker, an egress firewall enforcing destination and port policy, a trusted proxy with distributed rate limits, abuse monitoring, and a security review. Never run arbitrary website content on the application server.
+- URL and security-header connections resolve once, reject local, private, loopback, link-local, reserved, special-use and non-global IPv6 destinations, reject mixed public/private DNS answers, and connect directly to a validated IP. The HTTP tool uses only standard ports, the root path, and a HEAD request; it never follows redirects.
+- URL checking does not download or inspect pages. The header check requires a verified TLS connection for HTTPS. Proxy interception or restricted outbound networks may make results unavailable or cause certificate warnings.
+- API inputs have size, concurrency, and basic IP-based rate limits. API responses use `no-store`; this app does not log submitted values or persist scans on the server. Hosting providers, resolvers and upstream intermediaries can still see data. Use HTTPS.
+- Browser-local processing reduces data transmission but does not protect against browser extensions, compromised devices, or someone watching the screen. Use a password manager and avoid pasting private or sensitive data.
+- These controls reduce risk but are **not a complete production security boundary**. Before broad public deployment, add an isolated worker and egress firewall, robust abuse monitoring, distributed rate limits, observability, independent security review, and a policy for abuse/false reports.
 
 ## API
 
-- `GET /api/health` — lightweight process health check; does not contact third parties.
-- `GET /api/config` — whether the optional provider is configured; never returns the key.
-- `POST /api/scan` — JSON `{ "url": "https://example.com", "includeReputation": false }`.
-
-The response contains a redacted display URL, hostname, timestamp, verdict, coverage, and individual check statuses (`pass`, `warning`, `danger`, `info`, or `unavailable`). URLs are rendered as text, not clickable links.
+- `GET /api/health` — lightweight health check.
+- `GET /api/config` — provider availability, never the key.
+- `POST /api/scan` — `{ "url": "https://example.com", "includeReputation": false }`.
+- `POST /api/dns-audit` — `{ "domain": "example.com" }`.
+- `POST /api/security-headers` — `{ "url": "https://example.com" }`.
+- `POST /api/file-reputation` — `{ "sha256": "<64 hex characters>" }`; accepts a fingerprint only, not a file upload.
 
 ## Portfolio directions
 
-This is a useful foundation for a cybersecurity resume, especially when accompanied by a threat model and evidence of testing. Strong next steps include a safely isolated browser/VM analysis pipeline, carefully controlled redirect inspection, multiple independently attributed threat feeds, measured false-positive/false-negative rates on a documented test set, and observability and abuse defenses. Describe exactly which checks your deployed version performs; avoid presenting it as comprehensive malware detection until it actually has that capability.
+This is a useful foundation for a cybersecurity portfolio, particularly when accompanied by a threat model and evidence of tests. Next steps include safely isolated dynamic analysis, independently attributed threat feeds, evaluated false-positive and false-negative rates on a documented dataset, and production-grade egress and abuse controls. Describe only the checks actually implemented.

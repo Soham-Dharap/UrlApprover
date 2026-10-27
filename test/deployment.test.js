@@ -14,6 +14,7 @@ test('Render Blueprint uses one web service with a real health check and no requ
   const blueprint = YAML.parse(await readFile(path.join(root, 'render.yaml'), 'utf8'));
   assert.equal(blueprint.services.length, 1);
   const service = blueprint.services[0];
+  assert.equal(service.name, 'cyberace');
   assert.equal(service.type, 'web');
   assert.equal(service.runtime, 'node');
   assert.equal(service.plan, 'free');
